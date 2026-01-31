@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    networks:
+      - monitoring-net
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    networks:
+      - monitoring-net
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    networks:
+      - monitoring-net
+    pid: "host"
+    volumes:
+      - /:/host:ro,rslave
+      - /sys:/sys:ro
+      - /proc:/proc:ro
+    command:
+      - --path.rootfs=/host
+      - --collector.hwmon
+    restart: unless-stopped
+
+  smartctl_exporter:
+    image: matusnovak/prometheus-smartctl:latest
+    container_name: smartctl_exporter
+#    ports:
+#      - "9100:9100"
+    networks:
+      - monitoring-net
+    privileged: true
+    restart: unless-stopped
+
+volumes:
+  grafana-data:
+
+networks:
+  monitoring-net:

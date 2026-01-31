@@ -62,6 +62,19 @@ services:
     privileged: true
     restart: unless-stopped
 
+  modbus_exporter:
+    build:
+      context: ./modbus_exporter  # path to the cloned repo with Dockerfile
+    container_name: modbus_exporter
+    networks:
+      - monitoring-net
+    ports:
+      - "9602:9602"
+    volumes:
+      - ./modbus/modbus.yml:/etc/modbus_exporter/modbus.yml:ro
+    restart: unless-stopped
+    command: ["--config.file=/etc/modbus_exporter/modbus.yml", "--log.level=debug"]
+
 volumes:
   grafana-data:
 

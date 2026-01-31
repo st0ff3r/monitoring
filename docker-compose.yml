@@ -41,10 +41,24 @@ services:
   smartctl_exporter:
     image: matusnovak/prometheus-smartctl:latest
     container_name: smartctl_exporter
-#    ports:
-#      - "9100:9100"
     networks:
       - monitoring-net
+    privileged: true
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    networks:
+      - monitoring-net
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
     privileged: true
     restart: unless-stopped
 

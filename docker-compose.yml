@@ -10,6 +10,7 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
     restart: unless-stopped
 
   grafana:
@@ -33,7 +34,7 @@ services:
       - /:/host:ro,rslave
       - /sys:/sys:ro
       - /proc:/proc:ro
-      - hvac_data:/var/lib/node_exporter/textfile_collector
+      - hvac-data:/var/lib/node_exporter/textfile_collector
     command:
       - --path.rootfs=/host
       - --collector.hwmon
@@ -73,12 +74,13 @@ services:
     environment:
       HVAC_IP: ${HVAC_IP}
     volumes:
-      - hvac_data:/data
+      - hvac-data:/data
     restart: unless-stopped
 
 volumes:
   grafana-data:
-  hvac_data:
+  prometheus-data:
+  hvac-data:
 
 networks:
   monitoring-net:

@@ -1,50 +1,60 @@
-targets:
+modules:
   - name: hvac
-    host: 10.0.1.19
-    port: 502
-    unit_id: 1
-    registers:
+    protocol: tcp/ip
+    timeout: 2000
+    metrics:
       - name: CO2
         address: 100
-        type: holding
-        scale: 1
+        dataType: int16
+        metricType: gauge
+        factor: 1
       - name: SUPPLY_AIR_VOLUME
         address: 94
-        type: holding
-        scale: 1
+        dataType: int16
+        metricType: gauge
+        factor: 1
       - name: EXHAUST_AIR_VOLUME
         address: 95
-        type: holding
-        scale: 1
+        dataType: int16
+        metricType: gauge
+        factor: 1
       - name: OUTSIDE_AIR_TEMP
         address: 71
-        type: holding
-        scale: 0.1
+        dataType: int16
+        metricType: gauge
+        factor: 0.1
       - name: SUPPLY_AIR_TEMP
         address: 72
-        type: holding
-        scale: 0.1
+        dataType: int16
+        metricType: gauge
+        factor: 0.1
       - name: ROOM_TEMP
         address: 74
-        type: holding
-        scale: 0.1
+        dataType: int16
+        metricType: gauge
+        factor: 0.1
       - name: RETURN_AIR_TEMP
         address: 75
-        type: holding
-        scale: 0.1
+        dataType: int16
+        metricType: gauge
+        factor: 0.1
       - name: EXHAUST_AIR_TEMP
         address: 76
-        type: holding
-        scale: 0.1
+        dataType: int16
+        metricType: gauge
+        factor: 0.1
       - name: COOLING
         address: 32
-        type: holding
-        scale: 1
+        dataType: int16
+        metricType: gauge
+        factor: 1
       - name: HEAT_EXCHANGER
         address: 35
-        type: holding
-        scale: 1
+        dataType: int16
+        metricType: gauge
+        factor: 1
       - name: HEATING
         address: 39
-        type: holding
-        scale: 1
+        dataType: int16
+        metricType: gauge
+        factor: 1

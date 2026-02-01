@@ -33,9 +33,11 @@ services:
       - /:/host:ro,rslave
       - /sys:/sys:ro
       - /proc:/proc:ro
+      - hvac_data:/var/lib/node_exporter/textfile_collector
     command:
       - --path.rootfs=/host
       - --collector.hwmon
+      - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
     restart: unless-stopped
 
   smartctl_exporter:
@@ -62,21 +64,21 @@ services:
     privileged: true
     restart: unless-stopped
 
-  modbus_exporter:
+  hvac_exporter:
     build:
-      context: ./modbus_exporter  # path to the cloned repo with Dockerfile
-    container_name: modbus_exporter
+      context: ./textfile_exporter
+    container_name: hvac_exporter
     networks:
       - monitoring-net
-    ports:
-      - "9602:9602"
+    environment:
+      HVAC_IP: ${HVAC_IP}
     volumes:
-      - ./modbus/modbus.yml:/etc/modbus_exporter/modbus.yml:ro
+      - hvac_data:/data
     restart: unless-stopped
-    command: ["--config.file=/etc/modbus_exporter/modbus.yml", "--log.level=debug"]
 
 volumes:
   grafana-data:
+  hvac_data:
 
 networks:
   monitoring-net:

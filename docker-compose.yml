@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   prometheus:
     image: prom/prometheus:latest
@@ -74,6 +72,17 @@ services:
       HVAC_IP: ${HVAC_IP}
     volumes:
       - hvac-data:/data
+    restart: unless-stopped
+
+  apcupsd_exporter:
+    build:
+      context: ./apcupsd_exporter
+    container_name: apcupsd_exporter
+    ports:
+      - "9162:9162"
+    environment:
+      APC_ADDRESS: ${APC_ADDRESS}
+      TELEMETRY_ADDR: :9102
     restart: unless-stopped
 
 volumes:

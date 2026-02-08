@@ -18,6 +18,8 @@ services:
       - monitoring-net
     ports:
       - "3000:3000"
+    environment:
+        - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL}
     volumes:
       - grafana-data:/var/lib/grafana
     restart: unless-stopped

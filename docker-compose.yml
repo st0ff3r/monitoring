@@ -5,6 +5,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    user: "1001:1001"
     networks:
       - monitoring-net
     ports:
@@ -33,7 +34,6 @@ services:
              chown -R 1001:1001 /prometheus/thanos"
     volumes:
       - prometheus-data:/prometheus
-      - thanos-data:/prometheus/thanos
 
   # -------------------------
   # Thanos Sidecar
@@ -60,7 +60,6 @@ services:
               "--http-address=0.0.0.0:10902"]
     volumes:
       - prometheus-data:/prometheus
-      - thanos-data:/prometheus/thanos
       - ./thanos/generate-bucket.sh:/etc/thanos/generate-bucket.sh:ro
       - ./thanos/bucket.yaml.template:/etc/thanos/bucket.yaml.template:ro
       - ./thanos/bucket.yaml:/etc/thanos/bucket.yaml 
@@ -218,7 +217,6 @@ volumes:
   prometheus-data:
   hvac-data:
   minio-data:
-  thanos-data:
 
 # -------------------------
 # Networks

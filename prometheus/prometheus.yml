@@ -1,5 +1,8 @@
 global:
   scrape_interval: 15s
+  external_labels:
+    cluster: "local"
+    prometheus: "prometheus"
 
 scrape_configs:
   - job_name: 'node'

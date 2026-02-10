@@ -1,4 +1,7 @@
 services:
+  # -------------------------
+  # Prometheus
+  # -------------------------
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -6,11 +9,116 @@ services:
       - monitoring-net
     ports:
       - "9090:9090"
+    healthcheck:
+        test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:9090/-/ready"]
+        interval: 10s
+        retries: 10
+    command:
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.min-block-duration=2h
+      - --storage.tsdb.max-block-duration=2h
+      - --config.file=/etc/prometheus/prometheus.yml
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     restart: unless-stopped
 
+  # -------------------------
+  # Init Thanos volume rw
+  # -------------------------
+  init-thanos:
+    image: alpine
+    command: >
+      sh -c "mkdir -p /prometheus/thanos/upload &&
+             chown -R 1001:1001 /prometheus/thanos"
+    volumes:
+      - prometheus-data:/prometheus
+      - thanos-data:/prometheus/thanos
+
+  # -------------------------
+  # Thanos Sidecar
+  # -------------------------
+  thanos-sidecar:
+    image: thanosio/thanos:v0.41.0-rc.0
+    container_name: thanos-sidecar
+    depends_on:
+        prometheus:
+          condition: service_healthy
+        minio:
+          condition: service_started
+    networks:
+      - monitoring-net
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    entrypoint: ["/etc/thanos/generate-bucket.sh"]
+    command: ["/bin/thanos", "sidecar",
+              "--tsdb.path=/prometheus",
+              "--prometheus.url=http://prometheus:9090",
+              "--objstore.config-file=/etc/thanos/bucket.yaml",
+              "--grpc-address=0.0.0.0:10901",
+              "--http-address=0.0.0.0:10902"]
+    volumes:
+      - prometheus-data:/prometheus
+      - thanos-data:/prometheus/thanos
+      - ./thanos/generate-bucket.sh:/etc/thanos/generate-bucket.sh:ro
+      - ./thanos/bucket.yaml.template:/etc/thanos/bucket.yaml.template:ro
+      - ./thanos/bucket.yaml:/etc/thanos/bucket.yaml 
+    restart: unless-stopped
+
+  # -------------------------
+  # Thanos Querier
+  # -------------------------
+  thanos-querier:
+    image: thanosio/thanos:v0.41.0-rc.0
+    container_name: thanos-querier
+    networks:
+      - monitoring-net
+    depends_on:
+      - thanos-sidecar
+    command:
+      - query
+      - --http-address=0.0.0.0:10903
+      - --log.level=info
+    restart: unless-stopped
+
+  # -------------------------
+  # MinIO (lokal objektstorage)
+  # -------------------------
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    networks:
+      - monitoring-net
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    command: server /data
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
+  # -------------------------
+  # mc
+  # -------------------------
+  mc:
+    image: minio/mc
+    container_name: mc
+    networks:
+      - monitoring-net
+    restart: "no"
+    depends_on:
+      - minio
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    entrypoint: ["/mc-entrypoint.sh"]
+    volumes:
+      - ./mc-entrypoint.sh:/mc-entrypoint.sh:ro
+
+  # -------------------------
+  # Grafana
+  # -------------------------
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -24,6 +132,9 @@ services:
       - grafana-data:/var/lib/grafana
     restart: unless-stopped
 
+  # -------------------------
+  # Node Exporter
+  # -------------------------
   node_exporter:
     image: quay.io/prometheus/node-exporter:latest
     container_name: node_exporter
@@ -40,6 +151,9 @@ services:
       - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
     restart: unless-stopped
 
+  # -------------------------
+  # Smartctl Exporter
+  # -------------------------
   smartctl_exporter:
     image: matusnovak/prometheus-smartctl:latest
     container_name: smartctl_exporter
@@ -48,6 +162,9 @@ services:
     privileged: true
     restart: unless-stopped
 
+  # -------------------------
+  # cAdvisor
+  # -------------------------
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
@@ -64,6 +181,9 @@ services:
     privileged: true
     restart: unless-stopped
 
+  # -------------------------
+  # HVAC Exporter
+  # -------------------------
   hvac_exporter:
     build:
       context: ./textfile_exporter
@@ -76,6 +196,9 @@ services:
       - hvac-data:/data
     restart: unless-stopped
 
+  # -------------------------
+  # APC UPS Exporter
+  # -------------------------
   apcupsd_exporter:
     build:
       context: ./apcupsd_exporter
@@ -87,10 +210,18 @@ services:
       TELEMETRY_ADDR: :9102
     restart: unless-stopped
 
+# -------------------------
+# Volumes
+# -------------------------
 volumes:
   grafana-data:
   prometheus-data:
   hvac-data:
+  minio-data:
+  thanos-data:
 
+# -------------------------
+# Networks
+# -------------------------
 networks:
   monitoring-net:

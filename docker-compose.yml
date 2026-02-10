@@ -75,10 +75,9 @@ services:
       - monitoring-net
     depends_on:
       - thanos-sidecar
-    command:
-      - query
-      - --http-address=0.0.0.0:10903
-      - --log.level=info
+    command: ["query",
+        "--http-address=0.0.0.0:10903",
+        "--log.level=info"]
     restart: unless-stopped
 
   # -------------------------

@@ -1,0 +1,30 @@
++-----------------+           +-----------------+
+|                 |  Metrics  |                 |
+|   Node Exporter | --------> |                 |
+|   Smartctl      |           |                 |
+|   cAdvisor      |           |   Prometheus    |
+|   HVAC Exporter |           |      TSDB       |
+|   APC UPS       |           |  (/prometheus)  |
++-----------------+           +-----------------+
+                                      |
+                                      | Thanos Sidecar reads TSDB blocks
+                                      v
+                               +-----------------+
+                               | Thanos Sidecar  |
+                               |  /prometheus -> |
+                               |    MinIO        |
+                               +-----------------+
+                                      |
+                                      | Querier fetches historical + live data
+                                      v
+                               +-----------------+
+                               | Thanos Querier  |
+                               +-----------------+
+                                      |
+                                      | PromQL queries
+                                      v
+                               +-----------------+
+                               |    Grafana      |
+                               | (default: Thanos|
+                               |   Querier DS)   |
+                               +-----------------+

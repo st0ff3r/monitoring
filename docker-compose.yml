@@ -211,6 +211,20 @@ services:
       TELEMETRY_ADDR: :9102
     restart: unless-stopped
 
+  mysqld_exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: mysqld_exporter
+    network_mode: host
+    ports:
+      - "9104:9104"
+    env_file:
+      - .env
+    volumes:
+      - ./mysqld_exporter/my.cnf:/etc/mysql/my.cnf:ro
+      - ./mysqld_exporter/entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: ["/entrypoint.sh"]
+    restart: unless-stopped
+
 # -------------------------
 # Volumes
 # -------------------------

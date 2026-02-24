@@ -218,8 +218,6 @@ services:
     image: prom/mysqld-exporter:latest
     container_name: mysqld_exporter
     network_mode: host
-    ports:
-      - "9104:9104"
     env_file:
       - .env
     volumes:

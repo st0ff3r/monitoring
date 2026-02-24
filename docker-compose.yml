@@ -211,6 +211,9 @@ services:
       TELEMETRY_ADDR: :9102
     restart: unless-stopped
 
+  # -------------------------
+  # MySQLd Exporter
+  # -------------------------
   mysqld_exporter:
     image: prom/mysqld-exporter:latest
     container_name: mysqld_exporter
@@ -225,6 +228,18 @@ services:
     entrypoint: ["/entrypoint.sh"]
     restart: unless-stopped
 
+  # -------------------------
+  # Mosquitto Exporter
+  # -------------------------
+  mosquitto_exporter:
+    image: sapcc/mosquitto-exporter:latest
+    container_name: mosquitto_exporter
+    networks:
+      - monitoring-net
+    command:
+      - --endpoint=tcp://10.0.1.6:1883
+      - --bind-address=0.0.0.0:9234
+    restart: unless-stopped
 # -------------------------
 # Volumes
 # -------------------------

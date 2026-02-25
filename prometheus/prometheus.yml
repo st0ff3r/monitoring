@@ -36,3 +36,11 @@ scrape_configs:
   - job_name: 'mosquitto'
     static_configs:
       - targets: ['mosquitto_exporter:9234']
+
+  - job_name: 'snmp'
+    scrape_interval: 30s
+    metrics_path: /snmp
+    static_configs:
+      - targets: ['snmp_exporter:9116']
+    params:
+      module: [if_mib]

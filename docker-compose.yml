@@ -238,6 +238,21 @@ services:
       - --endpoint=tcp://10.0.1.6:1883
       - --bind-address=0.0.0.0:9234
     restart: unless-stopped
+
+  # -------------------------
+  # SNMP Exporter
+  # -------------------------
+  snmp_exporter:
+    image: prom/snmp-exporter:latest
+    container_name: snmp_exporter
+    networks:
+      - monitoring-net
+    ports:
+      - "9116:9116"
+    volumes:
+      - ./snmp/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+    restart: unless-stopped
+
 # -------------------------
 # Volumes
 # -------------------------

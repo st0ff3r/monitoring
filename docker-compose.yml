@@ -16,6 +16,7 @@ services:
         retries: 10
     command:
       - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
       - --storage.tsdb.min-block-duration=2h
       - --storage.tsdb.max-block-duration=2h
       - --config.file=/etc/prometheus/prometheus.yml
@@ -62,7 +63,7 @@ services:
       - prometheus-data:/prometheus
       - ./thanos/generate-bucket.sh:/etc/thanos/generate-bucket.sh:ro
       - ./thanos/bucket.yaml.template:/etc/thanos/bucket.yaml.template:ro
-      - ./thanos/bucket.yaml:/etc/thanos/bucket.yaml 
+      - ./thanos/bucket.yaml:/etc/thanos/bucket.yaml
     restart: unless-stopped
 
   # -------------------------
@@ -83,8 +84,24 @@ services:
         "--store=thanos-sidecar:10901"]
     restart: unless-stopped
 
+  thanos-compactor:
+    image: thanosio/thanos:v0.36.1
+    container_name: thanos-compactor
+    user: "0:0"
+    networks:
+      - monitoring-net
+    command:
+      - compact
+      - --data-dir=/data
+      - --objstore.config-file=/etc/thanos/bucket.yaml
+      - --wait
+    volumes:
+      - ./thanos/bucket.yaml:/etc/thanos/bucket.yaml:ro
+      - thanos-compactor-data:/data
+    restart: unless-stopped
+
   # -------------------------
-  # MinIO (lokal objektstorage)
+  # MinIO (local objectstorage)
   # -------------------------
   minio:
     image: minio/minio:latest
@@ -261,6 +278,7 @@ volumes:
   prometheus-data:
   hvac-data:
   minio-data:
+  thanos-compactor-data:
 
 # -------------------------
 # Networks

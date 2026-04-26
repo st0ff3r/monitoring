@@ -43,17 +43,13 @@ services:
     image: thanosio/thanos:v0.36.1
     container_name: thanos-sidecar
     depends_on:
-        prometheus:
-          condition: service_healthy
-        minio:
-          condition: service_started
+      prometheus:
+        condition: service_healthy
+      minio:
+        condition: service_started
     networks:
       - monitoring-net
-    environment:
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
-    entrypoint: ["/etc/thanos/generate-bucket.sh"]
-    command: ["/bin/thanos", "sidecar",
+    command: ["sidecar",
               "--tsdb.path=/prometheus",
               "--prometheus.url=http://prometheus:9090",
               "--objstore.config-file=/etc/thanos/bucket.yaml",
@@ -61,9 +57,9 @@ services:
               "--http-address=0.0.0.0:10902"]
     volumes:
       - prometheus-data:/prometheus
+      - ./thanos/bucket.yaml:/etc/thanos/bucket.yaml:ro
       - ./thanos/generate-bucket.sh:/etc/thanos/generate-bucket.sh:ro
       - ./thanos/bucket.yaml.template:/etc/thanos/bucket.yaml.template:ro
-      - ./thanos/bucket.yaml:/etc/thanos/bucket.yaml
     restart: unless-stopped
 
   # -------------------------

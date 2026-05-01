@@ -5,6 +5,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    hostname: prometheus
     user: "1001:1001"
     networks:
       - monitoring-net
@@ -39,9 +40,10 @@ services:
   # -------------------------
   # Thanos Sidecar
   # -------------------------
-  thanos-sidecar:
+  thanos_sidecar:
     image: thanosio/thanos:v0.36.1
-    container_name: thanos-sidecar
+    container_name: thanos_sidecar
+    hostname: thanos-sidecar
     depends_on:
       prometheus:
         condition: service_healthy
@@ -65,24 +67,26 @@ services:
   # -------------------------
   # Thanos Querier
   # -------------------------
-  thanos-querier:
+  thanos_querier:
     image: thanosio/thanos:v0.36.1
-    container_name: thanos-querier
+    container_name: thanos_querier
+    hostname: thanos-querier
     networks:
       - monitoring-net
     ports:
       - "10903:10903"
     depends_on:
-      - thanos-sidecar
+      - thanos_sidecar
     command: ["query",
         "--http-address=0.0.0.0:10903",
         "--log.level=info",
         "--store=thanos-sidecar:10901"]
     restart: unless-stopped
 
-  thanos-compactor:
+  thanos_compactor:
     image: thanosio/thanos:v0.36.1
-    container_name: thanos-compactor
+    container_name: thanos_compactor
+    hostname: thanos-compactor
     user: "0:0"
     networks:
       - monitoring-net
@@ -102,6 +106,7 @@ services:
   minio:
     image: minio/minio:latest
     container_name: minio
+    hostname: minio
     networks:
       - monitoring-net
     environment:
@@ -118,6 +123,7 @@ services:
   mc:
     image: minio/mc
     container_name: mc
+    hostname: mc
     networks:
       - monitoring-net
     restart: "no"
@@ -136,6 +142,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    hostname: grafana
     networks:
       - monitoring-net
     ports:
@@ -152,6 +159,7 @@ services:
   node_exporter:
     image: quay.io/prometheus/node-exporter:latest
     container_name: node_exporter
+    hostname: node-exporter
     network_mode: host
     pid: host
     volumes:
@@ -171,6 +179,7 @@ services:
   smartctl_exporter:
     image: matusnovak/prometheus-smartctl:latest
     container_name: smartctl_exporter
+    hostname: smartctl-exporter
     networks:
       - monitoring-net
     privileged: true
@@ -182,6 +191,7 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
+    hostname: cadvisor
     networks:
       - monitoring-net
     ports:
@@ -202,6 +212,7 @@ services:
     build:
       context: ./textfile_exporter
     container_name: hvac_exporter
+    hostname: hvac-exporter
     networks:
       - monitoring-net
     environment:
@@ -216,6 +227,7 @@ services:
   telegraf:
     image: telegraf:latest
     container_name: telegraf
+    hostname: telegraf
     networks:
       - monitoring-net
     depends_on:
@@ -233,6 +245,7 @@ services:
     build:
       context: ./apcupsd_exporter
     container_name: apcupsd_exporter
+    hostname: apcupsd-exporter
     ports:
       - "9162:9162"
     environment:
@@ -246,6 +259,7 @@ services:
   mysqld_exporter:
     image: prom/mysqld-exporter:latest
     container_name: mysqld_exporter
+    hostname: mysqld-exporter
     network_mode: host
     env_file:
       - .env
@@ -261,6 +275,7 @@ services:
   mosquitto_exporter:
     image: sapcc/mosquitto-exporter:latest
     container_name: mosquitto_exporter
+    hostname: mosquitto-exporter
     networks:
       - monitoring-net
     command:
@@ -274,6 +289,7 @@ services:
   snmp_exporter:
     image: prom/snmp-exporter:latest
     container_name: snmp_exporter
+    hostname: snmp-exporter
     networks:
       - monitoring-net
     ports:

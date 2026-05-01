@@ -46,3 +46,7 @@ scrape_configs:
       module: ['if_mib']
       target: ['10.0.1.1']
       auth: ['public']
+
+  - job_name: "hvac"
+    static_configs:
+      - targets: ["telegraf:9273"]

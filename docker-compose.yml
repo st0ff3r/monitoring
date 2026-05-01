@@ -211,6 +211,22 @@ services:
     restart: unless-stopped
 
   # -------------------------
+  # Telegraf (Modbus -> Prometheus)
+  # -------------------------
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    networks:
+      - monitoring-net
+    depends_on:
+      - prometheus
+    environment:
+      HVAC_IP: ${HVAC_IP}
+    volumes:
+      - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    restart: unless-stopped
+
+  # -------------------------
   # APC UPS Exporter
   # -------------------------
   apcupsd_exporter:

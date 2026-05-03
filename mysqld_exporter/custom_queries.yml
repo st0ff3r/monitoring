@@ -1,16 +1,16 @@
-performance_schema_query_write_digest:
+- name: mariadb_query_write_pressure
+  type: gauge
+  help: Approximate write pressure per query digest
+  key_labels:
+    - digest
+    - query
+  values:
+    - write_load
   query: |
     SELECT 
       DIGEST AS digest,
       DIGEST_TEXT AS query,
-      SUM_ROWS_AFFECTED AS rows_changed
+      SUM_ROWS_INSERTED + SUM_ROWS_UPDATED + SUM_ROWS_DELETED AS write_load
     FROM performance_schema.events_statements_summary_by_digest
-    ORDER BY SUM_ROWS_AFFECTED DESC
+    ORDER BY write_load DESC
     LIMIT 20
-  metrics:
-    - digest:
-        usage: "LABEL"
-    - query:
-        usage: "LABEL"
-    - rows_changed:
-        usage: "GAUGE"

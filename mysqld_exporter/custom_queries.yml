@@ -1,0 +1,16 @@
+performance_schema_query_write_digest:
+  query: |
+    SELECT 
+      DIGEST AS digest,
+      DIGEST_TEXT AS query,
+      SUM_ROWS_AFFECTED AS rows_changed
+    FROM performance_schema.events_statements_summary_by_digest
+    ORDER BY SUM_ROWS_AFFECTED DESC
+    LIMIT 20
+  metrics:
+    - digest:
+        usage: "LABEL"
+    - query:
+        usage: "LABEL"
+    - rows_changed:
+        usage: "GAUGE"

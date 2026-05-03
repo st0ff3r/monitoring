@@ -260,12 +260,15 @@ services:
     image: prom/mysqld-exporter:latest
     container_name: mysqld_exporter
     hostname: mysqld-exporter
-    network_mode: host
+    networks:
+      - monitoring-net
+      - meterloggerweb_default
     env_file:
       - .env
     volumes:
       - ./mysqld_exporter/my.cnf:/etc/mysql/my.cnf:ro
       - ./mysqld_exporter/entrypoint.sh:/entrypoint.sh:ro
+      - ./mysqld_exporter/custom_queries.yml:/etc/mysqld_exporter/custom_queries.yml:ro
     entrypoint: ["/entrypoint.sh"]
     restart: unless-stopped
 
@@ -313,3 +316,5 @@ volumes:
 # -------------------------
 networks:
   monitoring-net:
+  meterloggerweb_default:
+    external: true

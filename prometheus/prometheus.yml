@@ -11,7 +11,7 @@ scrape_configs:
 
   - job_name: 'smartctl'
     static_configs:
-      - targets: ['smartctl_exporter:9902']
+      - targets: ['smartctl-exporter:9902']
 
   - job_name: 'cadvisor'
     static_configs:
@@ -31,17 +31,17 @@ scrape_configs:
 
   - job_name: 'mysql'
     static_configs:
-      - targets: ['10.0.1.6:9104']
+      - targets: ['mysqld-exporter:9104']
 
   - job_name: 'mosquitto'
     static_configs:
-      - targets: ['mosquitto_exporter:9234']
+      - targets: ['mosquitto-exporter:9234']
 
   - job_name: 'snmp'
     scrape_interval: 30s
     metrics_path: /snmp
     static_configs:
-      - targets: ['snmp_exporter:9116']
+      - targets: ['snmp-exporter:9116']
     params:
       module: ['if_mib']
       target: ['10.0.1.1']

@@ -151,6 +151,7 @@ services:
         - GF_SERVER_ROOT_URL=${GF_SERVER_ROOT_URL}
     volumes:
       - grafana-data:/var/lib/grafana
+      - grafana-plugins:/var/lib/grafana/plugins
     restart: unless-stopped
 
   # -------------------------
@@ -305,6 +306,7 @@ services:
 # -------------------------
 volumes:
   grafana-data:
+  grafana-plugins:
   prometheus-data:
   hvac-data:
   minio-data:

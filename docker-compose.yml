@@ -268,7 +268,6 @@ services:
     volumes:
       - ./mysqld_exporter/my.cnf:/etc/mysql/my.cnf:ro
       - ./mysqld_exporter/entrypoint.sh:/entrypoint.sh:ro
-      - ./mysqld_exporter/custom_queries.yml:/etc/mysqld_exporter/custom_queries.yml:ro
     entrypoint: ["/entrypoint.sh"]
     restart: unless-stopped
 

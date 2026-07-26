@@ -12,9 +12,9 @@ services:
     ports:
       - "9090:9090"
     healthcheck:
-        test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:9090/-/ready"]
-        interval: 10s
-        retries: 10
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:9090/-/ready"]
+      interval: 10s
+      retries: 10
     command:
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=30d
@@ -25,23 +25,30 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
 
   # -------------------------
-  # Init Thanos volume rw
+  # Init Thanos volume permissions
   # -------------------------
   init-thanos:
     image: alpine
+    user: "0:0"
     command: >
-      sh -c "mkdir -p /prometheus/thanos/upload &&
-             chown -R 1001:1001 /prometheus/thanos"
+      sh -c "mkdir -p /prometheus/thanos/upload /var/thanos/store &&
+             chown -R 1001:1001 /prometheus/thanos &&
+             chown -R 10001:10001 /var/thanos/store"
     volumes:
       - prometheus-data:/prometheus
+      - thanos-store-data:/var/thanos/store
 
   # -------------------------
   # Thanos Sidecar
   # -------------------------
   thanos_sidecar:
-    image: thanosio/thanos:v0.36.1
+    image: thanosio/thanos:v0.37.0
     container_name: thanos_sidecar
     hostname: thanos-sidecar
     depends_on:
@@ -49,6 +56,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
+      init-thanos:
+        condition: service_completed_successfully
     networks:
       - monitoring-net
     command: ["sidecar",
@@ -65,10 +74,43 @@ services:
     restart: unless-stopped
 
   # -------------------------
-  # Thanos Querier
+  # Thanos Store Gateway (Reads historical data from MinIO)
+  # -------------------------
+  thanos_store:
+    image: thanosio/thanos:v0.37.0
+    container_name: thanos_store
+    hostname: thanos-store
+    user: "0:0"
+    networks:
+      - monitoring-net
+    depends_on:
+      minio:
+        condition: service_started
+      init-thanos:
+        condition: service_completed_successfully
+    command:
+      - store
+      - --data-dir=/var/thanos/store
+      - --objstore.config-file=/etc/thanos/bucket.yaml
+      - --http-address=0.0.0.0:10902
+      - --grpc-address=0.0.0.0:10901
+      - --index-cache-size=250MB
+      - --chunk-pool-size=500MB
+      - --max-time=-30d
+    volumes:
+      - ./thanos/bucket.yaml:/etc/thanos/bucket.yaml:ro
+      - thanos-store-data:/var/thanos/store
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  # -------------------------
+  # Thanos Querier (UPDATED: Queries both Sidecar and Store Gateway)
   # -------------------------
   thanos_querier:
-    image: thanosio/thanos:v0.36.1
+    image: thanosio/thanos:v0.37.0
     container_name: thanos_querier
     hostname: thanos-querier
     networks:
@@ -77,14 +119,19 @@ services:
       - "10903:10903"
     depends_on:
       - thanos_sidecar
+      - thanos_store
     command: ["query",
         "--http-address=0.0.0.0:10903",
         "--log.level=info",
-        "--store=thanos-sidecar:10901"]
+        "--store=thanos_sidecar:10901",
+        "--store=thanos_store:10901"]
     restart: unless-stopped
 
+  # -------------------------
+  # Thanos Compactor
+  # -------------------------
   thanos_compactor:
-    image: thanosio/thanos:v0.36.1
+    image: thanosio/thanos:v0.37.0
     container_name: thanos_compactor
     hostname: thanos-compactor
     user: "0:0"
@@ -311,6 +358,7 @@ volumes:
   hvac-data:
   minio-data:
   thanos-compactor-data:
+  thanos-store-data:
 
 # -------------------------
 # Networks
